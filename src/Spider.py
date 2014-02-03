@@ -57,7 +57,9 @@ def get_page(url):
         return ""
 
 def addToIndex(page):
-    page = string.lower(page)
+    page = page.lower()
+    # print "______________________"
+    # print page
     current = re.search(ur"[a-z,',`]+", page)
     voc = {}
     while current:
@@ -110,10 +112,10 @@ def dryPage(page):
         page = page.replace (current.group(), ' ')
         current = re.search(ur"( ')|(' )", page)
 
-    current = re.search(ur"[A-Z]", page)
+    current = re.search(ur"[A-Z0-9]{2,}", page)
     while (current):
         page = page.replace (current.group(), '')
-        current = re.search(ur"[A-Z]", page)
+        current = re.search(ur"[A-Z0-9]{2,}", page)
 
     current = re.search(ur"'[a-z]*", page)
     while (current):
