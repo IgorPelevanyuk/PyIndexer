@@ -1,5 +1,6 @@
 import pymongo
 
+#Just connect to the mongo DB instance
 connection_string = "mongodb://localhost"
 connection = pymongo.MongoClient(connection_string)
 monPyindexDB = connection.pyindex
@@ -14,9 +15,8 @@ summa = 0
 count = 0
 total_sum = 0
 total_count =0
+print cursor.count()
 for word in cursor:
-    # print len(word['word'])
-    # print word['word']
     total_sum += word['count']
     total_count += 1
     if word['word'] not in words:

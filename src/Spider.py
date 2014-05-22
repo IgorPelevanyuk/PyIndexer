@@ -70,7 +70,6 @@ def addToIndex(page):
         page = page[page.index(current.group())+len(current.group()):]
         current = re.search(ur"[a-z'`]+", page)
     addWords(voc)
-    print len(voc)
 
 def addAllLinks(page):
     links = []
@@ -156,3 +155,29 @@ class Spider:
             print str(i)+" - "+url +"     //"
             if page!='':
                 i+=1
+
+class TxtSpider(Spider):
+    
+    def __init__(self):
+        pass
+    
+    def dry(self, line):
+        current = re.search(ur"[^A-Za-z\s]+", line)
+        while (current):
+            line = line.replace (current.group(), ' ')
+            current = re.search(ur"[^A-Za-z\s]+", line)
+        return line
+    
+    def crawl(self, path):
+        file_obj = file(path, 'r')
+        for line in file_obj:
+            line = line.lower()
+            line = self.dry(line)
+            addToIndex(line)
+        file_obj.close()
+            
+
+x = TxtSpider()
+x.clearDB()
+x.crawl('/home/igor/Desktop/pg1342.txt')
+            
