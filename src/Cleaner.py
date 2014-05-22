@@ -2,7 +2,7 @@ import pymongo
 
 connection_string = "mongodb://localhost"
 connection = pymongo.MongoClient(connection_string)
-monPyindexDB = connection.pyindex #simple comment
+monPyindexDB = connection.pyindex
 
 f = open('EWORDS.TXT', 'r+')
 words = {}
