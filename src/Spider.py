@@ -28,7 +28,13 @@ def setUncrawled(url_list):
 def addWords(word_dict):
     for word in word_dict:
         monPyindexDB.index.update({'word':word}, {'$inc':{'count':word_dict[word]}}, upsert=True)
-    
+
+def getIndexesFromDB():
+    indexes = {}
+    cursor = monPyindexDB.index.find()
+    for i in range(0, cursor.count()):
+        indexes[cursor[i]['word']] = cursor[i]['count']
+    return indexes
 
 #-------------------------------------------------------------------------------
 
@@ -159,25 +165,68 @@ class Spider:
 class TxtSpider(Spider):
     
     def __init__(self):
+        self.names = {}
+        self.decapitalised = set('i')
+        self.index = {}
+        self.removed1 = 0
+        self.removed2 = 0
         pass
     
+    def _addToLocalIndex(self, text):
+        text = text.lower()
+        current = re.search(ur"[a-z]+", text)
+        while current:
+            if current.group() in self.index:
+                self.index[current.group()]+=1
+            else:
+                self.index[current.group()]=1
+            text = text[text.index(current.group())+len(current.group()):]
+            current = re.search(ur"[a-z]+", text)
+        
+    
+    def _findNames(self, line):
+        copy_of_line = line
+        #current = re.search(ur"\s*[a-z][^\.\n\!\?]\s+[A-Z][A-Za-z]+", copy_of_line)
+        current = re.search(ur"[A-Z][a-z]+", copy_of_line)
+        while (current):
+            copy_of_line = copy_of_line.replace(current.group(), '', 1)
+            current = re.search(ur"[A-Z][a-z]+", copy_of_line)
+            self.removed2 += 1
+        current = re.search(ur"[a-z]+", copy_of_line)
+        while (current):
+            self.decapitalised.add(current.group())
+            copy_of_line = copy_of_line.replace(current.group(), '',1)
+            current = re.search(ur"[a-z]+", copy_of_line)
+    
     def dry(self, line):
+        self._findNames(line)
+        line = line.lower()
         current = re.search(ur"[^A-Za-z\s]+", line)
         while (current):
-            line = line.replace (current.group(), ' ')
+            line = line.replace (current.group(), ' ',1)
             current = re.search(ur"[^A-Za-z\s]+", line)
         return line
     
     def crawl(self, path):
         file_obj = file(path, 'r')
-        for line in file_obj:
-            line = line.lower()
+        for line in file_obj:            
             line = self.dry(line)
-            addToIndex(line)
+            self._addToLocalIndex(line)
         file_obj.close()
+        for name in self.index.keys():
+            if (name not in self.decapitalised):
+                del self.index[name]
+        print len(self.index)
+        for name in sorted(self.index.items(), key = lambda x: x[1]):
+            print name[0], ' ', self.index[name[0]]
+        print sum(self.index.values())
+        print self.removed1
+        print self.removed2
+        print self.removed1 + sum(self.index.values())
+        addWords(self.index)
             
 
 x = TxtSpider()
 x.clearDB()
-x.crawl('/home/igor/Desktop/pg1342.txt')
+x.crawl('/home/igor/Desktop/dg.txt')
             
