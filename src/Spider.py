@@ -1,7 +1,7 @@
-import string
+
 import re
-import pickle
-from operator import itemgetter
+import os
+
 import pymongo
 
 connection_string = "mongodb://localhost"
@@ -169,6 +169,7 @@ class TxtSpider(Spider):
         self.decapitalised = set('i')
         self.index = {}
         self.removed1 = 0
+        self.removedNames = {}
         self.removed2 = 0
         pass
     
@@ -189,6 +190,7 @@ class TxtSpider(Spider):
         #current = re.search(ur"\s*[a-z][^\.\n\!\?]\s+[A-Z][A-Za-z]+", copy_of_line)
         current = re.search(ur"[A-Z][a-z]+", copy_of_line)
         while (current):
+            self.removedNames[current.group()] = self.removedNames.get(current.group(), 0) + 1
             copy_of_line = copy_of_line.replace(current.group(), '', 1)
             current = re.search(ur"[A-Z][a-z]+", copy_of_line)
             self.removed2 += 1
@@ -208,6 +210,19 @@ class TxtSpider(Spider):
         return line
     
     def crawl(self, path):
+        if os.path.isdir(path):
+            from os import walk
+            f = []
+            dir_path = ""
+            for (dirpath, dirnames, filenames) in walk(path):
+                f.extend(filenames)
+                dir_path = dirpath
+                break
+            print path
+            print f
+            print dir_path
+            return 0
+            
         file_obj = file(path, 'r')
         for line in file_obj:            
             line = self.dry(line)
@@ -223,10 +238,18 @@ class TxtSpider(Spider):
         print self.removed1
         print self.removed2
         print self.removed1 + sum(self.index.values())
+        print 'TEST'
+        
+        print sum(self.index.values())
+        #print len([word[0] for word in self.removedNames.items() if word[0].lower() not in self.decapitalised ])
+        
+        #for name in sorted(self.removedNames.items(), key = lambda x: x[1]):
+        #    print (name[0]+' '+str(self.removedNames[name[0]]) if name[0].lower() not in self.decapitalised else "") 
         addWords(self.index)
             
 
 x = TxtSpider()
 x.clearDB()
-x.crawl('/home/igor/Desktop/dg.txt')
+#x.crawl('/home/igor/Desktop/dg.txt')
+x.crawl('/home/igor/Desktop/bookdb/warandpeace.txt')
             
