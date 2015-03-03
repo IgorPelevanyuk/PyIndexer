@@ -26,8 +26,8 @@ for word in cursor:
             print word['word']
     # break
 
-print summa
-print count
+print 'Total amount of unresolved cases: ', summa
+print 'out of ', total_sum
 
-print total_sum
-print total_count
+print '\r\n Number of unresolved unique words', count
+print 'out of ', total_count
