@@ -3,7 +3,6 @@ import re
 import os
 
 import pymongo
-from distlib.locators import Page
 
 connection_string = "mongodb://admin:pass@vm162.jinr.ru:27017"
 connection = pymongo.MongoClient(connection_string)
