@@ -424,7 +424,7 @@ RULES = [# Plural
          {'ending':'ing', 'correction':''},
          ]
 
-def checkEnding(word):
+def checkWord(word):
     candidates = []
     for rule in RULES:
         if ('??'  in rule):
