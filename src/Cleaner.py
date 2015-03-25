@@ -4,7 +4,7 @@ import inspector
 # This module is able to clean frequency database by checking if the word could
 # be found in other collections (EWORDS.TXT or db.vocabulary) 
 #
-connection_string = "mongodb://localhost"
+connection_string = "mongodb://admin:pass@vm162.jinr.ru:27017"
 connection = pymongo.MongoClient(connection_string)
 monPyindexDB = connection.pyindex
 
