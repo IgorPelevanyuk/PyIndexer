@@ -3,8 +3,9 @@ import re
 import os
 
 import pymongo
+from distlib.locators import Page
 
-connection_string = "mongodb://localhost"
+connection_string = "mongodb://admin:pass@vm162.jinr.ru:27017"
 connection = pymongo.MongoClient(connection_string)
 monPyindexDB = connection.pyindex
 
@@ -17,6 +18,7 @@ def setCrawled(url):
     monPyindexDB.crawled.insert({'url':url})
 
 def setUncrawled(url_list):
+    count = 0
     for url in url_list:
         if not isAcceptable(url):
             continue
@@ -24,6 +26,8 @@ def setUncrawled(url_list):
         uncraw_cursor = monPyindexDB.tocrawl.find({'url':url})
         if craw_cursor.count()==0 and uncraw_cursor.count()==0:
             monPyindexDB.tocrawl.insert({'url':url})
+            count += 1
+    print 'Links added:', count
 
 def addWords(word_dict):
     for word in word_dict:
@@ -55,11 +59,16 @@ def get_page(url):
         import urllib
         if(isAcceptable(url)):
             page = urllib.urlopen(url).read()
-        if 'xml:lang="en-GB"' in page:
-            return page
+            if 'lang="en"' in page:
+                return page
+            else:
+                print 'WARNING! Wrong language!'
+                return ""
         else:
+            print 'Not alowed url:', url
             return ""
     except:
+        print 'Exception'
         return ""
 
 def addToIndex(page):
@@ -77,16 +86,39 @@ def addToIndex(page):
         current = re.search(ur"[a-z'`]+", page)
     addWords(voc)
 
-def addAllLinks(page):
+def getAllLinks(page):
     links = []
     current = re.search(ur"href=\"[^\"]+\"", page)
     while (current):
         links+=[current.group()[6:-1]] if "http:" in current.group()[6:-1] else ["http://www.bbc.co.uk"+current.group()[6:-1]]
         page = page[page.index(current.group())+len(current.group()):]
         current = re.search(ur"href=\"[^\"]+\"", page)
+        
+    print 'Links found:', len(links)
     return links
 
 def dryPage(page):
+    if '<div class="story-body">' not in page:
+        return ''
+    print 'Page length', len(page)
+    page = page[page.index('<div class="story-body">') + len('<div class="story-body">'):] 
+    open_div = 1
+    close_div = 0
+    current = 0
+    while (open_div != close_div):
+        open_div_index = page[current:].index('<div')
+        close_div_index = page[current:].index('</div>')
+        if open_div_index < close_div_index:
+            open_div += 1
+            current = current + open_div_index + 4
+        else:
+            close_div += 1
+            current = current + close_div_index + 6
+    page = page[0:current]
+        
+        
+    
+    
     current = re.search(ur"[\r\n]+", page)
     while (current):
         page = page.replace (current.group(), ' ')
@@ -148,17 +180,20 @@ class Spider:
         monPyindexDB.index.remove()
         monPyindexDB.crawled.remove()
         monPyindexDB.tocrawl.insert({'url':"http://www.bbc.co.uk"})
+        print monPyindexDB.tocrawl.find()[0]
+        
 
     def crawl(self, amount):
         i=0
         while (i<amount):                    # AND toCrawl exists!!!
             url = getOneUncrawled()
+            print '================================================================'
+            print str(i)+" - "+url +"     //"
             page = get_page(url)
-            setUncrawled( addAllLinks(page) )
+            setUncrawled( getAllLinks(page) )
             page = dryPage(page)
             addToIndex(page)
-            setCrawled(url)
-            print str(i)+" - "+url +"     //"
+            setCrawled(url)            
             if page!='':
                 i+=1
 
@@ -248,8 +283,11 @@ class TxtSpider(Spider):
         addWords(self.index)
             
 
-x = TxtSpider()
-x.clearDB()
-#x.crawl('/home/igor/Desktop/dg.txt')
-x.crawl('/home/igor/Desktop/bookdb/warandpeace.txt')
+#x = TxtSpider()
+#x.clearDB()
+#x.crawl('/home/ipelevan/Desktop/bookdb/warandpeace.txt')
+
+z = Spider()
+z.clearDB()
+z.crawl(10000)
             
